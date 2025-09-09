@@ -18,6 +18,7 @@ export interface NotificationOptions {
 export class NotificationService {
   private static instance: NotificationService;
   private isInitialized = false;
+  private nextId = 1;
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -81,7 +82,7 @@ export class NotificationService {
       const notification = {
         title: options.title,
         body: options.body,
-        id: options.id || Date.now(),
+        id: options.id || this.nextId++,
         sound: options.sound || 'default',
         actionTypeId: options.actionTypeId || 'default',
         extra: options.extra || {}
@@ -107,7 +108,7 @@ export class NotificationService {
       const notification = {
         title: options.title,
         body: options.body,
-        id: options.id || Date.now(),
+        id: options.id || this.nextId++,
         sound: options.sound || 'default',
         actionTypeId: options.actionTypeId || 'default',
         extra: options.extra || {},
@@ -139,7 +140,7 @@ export class NotificationService {
       const notification = {
         title,
         body,
-        id: Date.now(),
+        id: this.nextId++,
         sound: 'default', // Use default alarm sound
         actionTypeId: 'alarm',
         extra: {
@@ -175,7 +176,7 @@ export class NotificationService {
     await this.scheduleNotification({
       title,
       body,
-      id: Date.now(),
+      id: this.nextId++,
       schedule: {
         at: alarmTime,
         repeats: false
