@@ -173,6 +173,10 @@ export class NotificationService {
     const alarmTime = new Date();
     alarmTime.setMinutes(alarmTime.getMinutes() + delayMinutes);
 
+    console.log(`Scheduling timely reminder for: ${alarmTime.toLocaleString()}`);
+    console.log(`Current time: ${new Date().toLocaleString()}`);
+    console.log(`Delay: ${delayMinutes} minutes`);
+
     await this.scheduleNotification({
       title,
       body,
@@ -182,7 +186,9 @@ export class NotificationService {
         repeats: false
       },
       extra: {
-        type: 'timely_reminder'
+        type: 'timely_reminder',
+        scheduledFor: alarmTime.toISOString(),
+        delayMinutes
       }
     });
   }

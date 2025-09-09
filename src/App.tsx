@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useEffect } from 'react';
+import React, { useLayoutEffect, useRef, useEffect, useState } from 'react';
 import './App.css';
 import './index.css';
 import { gsap } from 'gsap';
@@ -7,6 +7,8 @@ import { useNotificationStore } from './stores/notificationStore';
 function App() {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [scheduledTime, setScheduledTime] = useState<Date | null>(null);
   const {
     isInitialized,
     hasPermission,
@@ -43,6 +45,26 @@ function App() {
     initializeNotifications();
   }, [initializeNotifications]);
 
+  // Countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (countdown !== null && countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [countdown]);
+
   const handleImmediateNotification = async () => {
     await sendImmediateNotification(
       'Test Notification',
@@ -51,20 +73,32 @@ function App() {
   };
 
   const handleTimelyReminder = async () => {
+    const delaySeconds = 10; // 10 seconds for testing
+    const delayMinutes = delaySeconds / 60;
+    
+    // Set up countdown timer
+    setCountdown(delaySeconds);
+    setScheduledTime(new Date(Date.now() + delaySeconds * 1000));
+    
     await scheduleTimelyReminder(
       'Timely Reminder',
-      'This is a reminder scheduled for 10 seconds from now!',
-      0.17 // ~10 seconds for testing
+      `This is a reminder scheduled for ${delaySeconds} seconds from now!`,
+      delayMinutes
     );
   };
 
   const handleAlarmReminder = async () => {
+    const delaySeconds = 30; // 30 seconds for testing
     const alarmTime = new Date();
-    alarmTime.setMinutes(alarmTime.getMinutes() + 1); // 1 minute from now
+    alarmTime.setSeconds(alarmTime.getSeconds() + delaySeconds);
+    
+    // Set up countdown timer
+    setCountdown(delaySeconds);
+    setScheduledTime(alarmTime);
     
     await scheduleAlarmReminder(
       'Alarm Reminder',
-      'This is an alarm-type reminder that will work even when app is closed!',
+      `This is an alarm-type reminder that will work even when app is closed! (${delaySeconds}s)`,
       alarmTime,
       false
     );
@@ -117,6 +151,26 @@ function App() {
           )}
         </div>
 
+        {/* Timer Display */}
+        {countdown !== null && countdown > 0 && (
+          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h3 className="text-lg font-semibold text-blue-800">⏰ Notification Timer</h3>
+            <div className="mt-2 text-center">
+              <div className="text-3xl font-bold text-blue-600">
+                {countdown} seconds
+              </div>
+              {scheduledTime && (
+                <div className="text-sm text-blue-600 mt-1">
+                  Scheduled for: {scheduledTime.toLocaleTimeString()}
+                </div>
+              )}
+            </div>
+            <div className="mt-2 text-xs text-blue-500">
+              Close the app to test background notifications!
+            </div>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
@@ -146,7 +200,7 @@ function App() {
 
             <button
               onClick={handleTimelyReminder}
-              disabled={!hasPermission}
+              disabled={!hasPermission || countdown !== null}
               className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
             >
               2. Timely Reminder (10s delay)
@@ -154,10 +208,10 @@ function App() {
 
             <button
               onClick={handleAlarmReminder}
-              disabled={!hasPermission}
+              disabled={!hasPermission || countdown !== null}
               className="w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:bg-gray-400"
             >
-              3. Alarm Reminder (1min, works when closed)
+              3. Alarm Reminder (30s, works when closed)
             </button>
 
             <button
