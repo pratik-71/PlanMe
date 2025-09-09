@@ -3,6 +3,8 @@ import './App.css';
 import './index.css';
 import { gsap } from 'gsap';
 import { useNotificationStore } from './stores/notificationStore';
+import { NotificationDebugger } from './components/NotificationDebugger';
+import { WebNotificationTester } from './components/WebNotificationTester';
 
 function App() {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
@@ -107,6 +109,17 @@ function App() {
   const handleRequestPermissions = async () => {
     await requestPermissions();
     await refreshPendingNotifications();
+  };
+
+  const handleTestNotifications = async () => {
+    try {
+      const { notificationService } = await import('./services/notificationService');
+      await notificationService.testNotificationSystem();
+      alert('Test notifications sent! Check console for details.');
+    } catch (error) {
+      console.error('Test failed:', error);
+      alert('Test failed. Check console for details.');
+    }
   };
 
   return (
@@ -215,6 +228,14 @@ function App() {
             </button>
 
             <button
+              onClick={handleTestNotifications}
+              disabled={!hasPermission}
+              className="w-full rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 disabled:bg-gray-400"
+            >
+              🧪 Test Notification System
+            </button>
+
+            <button
               onClick={cancelAllNotifications}
               className="w-full rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
             >
@@ -228,6 +249,12 @@ function App() {
             <p>• Check notification panel for scheduled notifications</p>
           </div>
         </div>
+
+        {/* Web Notification Tester */}
+        <WebNotificationTester />
+
+        {/* Notification Debugger */}
+        <NotificationDebugger />
       </div>
     </div>
   );

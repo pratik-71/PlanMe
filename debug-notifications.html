@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Debug Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">🔍 Notification Debug Tool</h1>
+        
+        <!-- Web Notifications Test -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">🌐 Web Notifications Test</h2>
+            <div id="web-status" class="mb-4 p-3 bg-gray-50 rounded"></div>
+            <button onclick="testWebNotifications()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Test Web Notifications
+            </button>
+            <button onclick="testScheduledWebNotification()" class="ml-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                Test Scheduled (5s)
+            </button>
+        </div>
+
+        <!-- Capacitor Test -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">📱 Capacitor Notifications Test</h2>
+            <div id="capacitor-status" class="mb-4 p-3 bg-gray-50 rounded"></div>
+            <button onclick="testCapacitorNotifications()" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                Test Capacitor Notifications
+            </button>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-xl font-semibold mb-4">📊 Debug Information</h2>
+            <div id="debug-info" class="space-y-2"></div>
+            <button onclick="exportDebugInfo()" class="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                Export Debug Info
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let debugInfo = {
+            timestamp: new Date().toISOString(),
+            userAgent: navigator.userAgent,
+            platform: 'web',
+            webNotifications: {
+                supported: false,
+                permission: 'default',
+                testResults: []
+            },
+            capacitor: {
+                available: false,
+                testResults: []
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDebugInfo();
+            checkWebNotifications();
+            checkCapacitor();
+        });
+
+        function updateDebugInfo() {
+            const debugDiv = document.getElementById('debug-info');
+            debugDiv.innerHTML = `
+                <div><strong>User Agent:</strong> ${navigator.userAgent}</div>
+                <div><strong>Platform:</strong> ${debugInfo.platform}</div>
+                <div><strong>Web Notifications:</strong> ${debugInfo.webNotifications.supported ? '✅ Supported' : '❌ Not Supported'}</div>
+                <div><strong>Web Permission:</strong> ${debugInfo.webNotifications.permission}</div>
+                <div><strong>Capacitor:</strong> ${debugInfo.capacitor.available ? '✅ Available' : '❌ Not Available'}</div>
+            `;
+        }
+
+        function checkWebNotifications() {
+            const supported = 'Notification' in window;
+            const permission = supported ? Notification.permission : 'not-supported';
+            
+            debugInfo.webNotifications = {
+                supported,
+                permission,
+                testResults: []
+            };
+
+            const statusDiv = document.getElementById('web-status');
+            statusDiv.innerHTML = `
+                <div>Supported: ${supported ? '✅ Yes' : '❌ No'}</div>
+                <div>Permission: ${permission === 'granted' ? '✅ Granted' : permission === 'denied' ? '❌ Denied' : '⚠️ Default'}</div>
+            `;
+        }
+
+        function checkCapacitor() {
+            const available = typeof window.Capacitor !== 'undefined';
+            debugInfo.capacitor.available = available;
+            
+            const statusDiv = document.getElementById('capacitor-status');
+            statusDiv.innerHTML = `
+                <div>Capacitor Available: ${available ? '✅ Yes' : '❌ No'}</div>
+                <div>Platform: ${available ? window.Capacitor.getPlatform() : 'N/A'}</div>
+            `;
+        }
+
+        async function testWebNotifications() {
+            if (!('Notification' in window)) {
+                alert('Web notifications not supported in this browser');
+                return;
+            }
+
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                debugInfo.webNotifications.permission = permission;
+                checkWebNotifications();
+            }
+
+            if (Notification.permission === 'granted') {
+                try {
+                    const notification = new Notification('Test Notification', {
+                        body: 'This is a test notification from the debug tool',
+                        icon: '/favicon.ico'
+                    });
+                    
+                    notification.onclick = () => {
+                        console.log('Notification clicked');
+                        notification.close();
+                    };
+                    
+                    debugInfo.webNotifications.testResults.push('✅ Web notification sent successfully');
+                    alert('Web notification sent!');
+                } catch (error) {
+                    debugInfo.webNotifications.testResults.push(`❌ Web notification failed: ${error.message}`);
+                    alert(`Web notification failed: ${error.message}`);
+                }
+            } else {
+                alert('Notification permission not granted');
+            }
+        }
+
+        async function testScheduledWebNotification() {
+            if (!('Notification' in window) || Notification.permission !== 'granted') {
+                alert('Web notifications not available');
+                return;
+            }
+
+            alert('Scheduling notification for 5 seconds...');
+            
+            setTimeout(() => {
+                try {
+                    const notification = new Notification('Scheduled Notification', {
+                        body: 'This notification was scheduled 5 seconds ago',
+                        icon: '/favicon.ico'
+                    });
+                    
+                    notification.onclick = () => {
+                        console.log('Scheduled notification clicked');
+                        notification.close();
+                    };
+                    
+                    debugInfo.webNotifications.testResults.push('✅ Scheduled web notification sent');
+                } catch (error) {
+                    debugInfo.webNotifications.testResults.push(`❌ Scheduled web notification failed: ${error.message}`);
+                }
+            }, 5000);
+        }
+
+        async function testCapacitorNotifications() {
+            if (typeof window.Capacitor === 'undefined') {
+                alert('Capacitor not available. This test only works in a Capacitor app.');
+                return;
+            }
+
+            try {
+                const { LocalNotifications } = window.Capacitor.Plugins;
+                
+                // Request permissions
+                const permission = await LocalNotifications.requestPermissions();
+                debugInfo.capacitor.testResults.push(`Permission request: ${JSON.stringify(permission)}`);
+                
+                // Test immediate notification
+                await LocalNotifications.schedule({
+                    notifications: [{
+                        title: 'Capacitor Test',
+                        body: 'This is a test notification from Capacitor',
+                        id: 1,
+                        sound: 'default'
+                    }]
+                });
+                
+                debugInfo.capacitor.testResults.push('✅ Capacitor notification sent successfully');
+                alert('Capacitor notification sent!');
+                
+                // Test scheduled notification
+                const futureTime = new Date();
+                futureTime.setSeconds(futureTime.getSeconds() + 5);
+                
+                await LocalNotifications.schedule({
+                    notifications: [{
+                        title: 'Capacitor Scheduled',
+                        body: 'This is a scheduled notification from Capacitor',
+                        id: 2,
+                        sound: 'default',
+                        schedule: {
+                            at: futureTime,
+                            repeats: false
+                        }
+                    }]
+                });
+                
+                debugInfo.capacitor.testResults.push('✅ Capacitor scheduled notification sent');
+                alert('Capacitor scheduled notification sent!');
+                
+            } catch (error) {
+                debugInfo.capacitor.testResults.push(`❌ Capacitor notification failed: ${error.message}`);
+                alert(`Capacitor notification failed: ${error.message}`);
+            }
+        }
+
+        function exportDebugInfo() {
+            const dataStr = JSON.stringify(debugInfo, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'notification-debug.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

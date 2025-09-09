@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Notification Test</title>
+</head>
+<body>
+    <h1>Notification Test Page</h1>
+    <button onclick="testNotifications()">Test Notifications</button>
+    <div id="output"></div>
+
+    <script>
+        async function testNotifications() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Testing notifications...</p>';
+            
+            try {
+                // Test immediate notification
+                if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        new Notification('Test Immediate', {
+                            body: 'This is an immediate notification test!'
+                        });
+                        output.innerHTML += '<p>✅ Immediate notification sent</p>';
+                    } else {
+                        output.innerHTML += '<p>❌ Notification permission denied</p>';
+                    }
+                } else {
+                    output.innerHTML += '<p>❌ Notifications not supported</p>';
+                }
+            } catch (error) {
+                output.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -119,13 +119,20 @@ export class NotificationService {
         }
       };
 
+      console.log('Scheduling notification with details:', {
+        id: notification.id,
+        title: notification.title,
+        scheduledAt: notification.schedule.at.toISOString(),
+        timeUntilNotification: Math.round((notification.schedule.at.getTime() - Date.now()) / 1000) + ' seconds'
+      });
+
       await LocalNotifications.schedule({
         notifications: [notification]
       });
 
-      console.log('Scheduled notification created:', notification);
+      console.log('✅ Scheduled notification created successfully:', notification);
     } catch (error) {
-      console.error('Error scheduling notification:', error);
+      console.error('❌ Error scheduling notification:', error);
       throw error;
     }
   }
@@ -171,11 +178,12 @@ export class NotificationService {
     delayMinutes: number
   ): Promise<void> {
     const alarmTime = new Date();
-    alarmTime.setMinutes(alarmTime.getMinutes() + delayMinutes);
+    const delaySeconds = Math.round(delayMinutes * 60);
+    alarmTime.setSeconds(alarmTime.getSeconds() + delaySeconds);
 
     console.log(`Scheduling timely reminder for: ${alarmTime.toLocaleString()}`);
     console.log(`Current time: ${new Date().toLocaleString()}`);
-    console.log(`Delay: ${delayMinutes} minutes`);
+    console.log(`Delay: ${delaySeconds} seconds (${delayMinutes} minutes)`);
 
     await this.scheduleNotification({
       title,
@@ -188,7 +196,8 @@ export class NotificationService {
       extra: {
         type: 'timely_reminder',
         scheduledFor: alarmTime.toISOString(),
-        delayMinutes
+        delayMinutes,
+        delaySeconds
       }
     });
   }
@@ -214,8 +223,10 @@ export class NotificationService {
         await LocalNotifications.cancel({
           notifications: ids.map(id => ({ id }))
         });
+        console.log(`Cancelled ${ids.length} notifications`);
+      } else {
+        console.log('No pending notifications to cancel');
       }
-      console.log('All notifications cancelled');
     } catch (error) {
       console.error('Error cancelling all notifications:', error);
       throw error;
@@ -238,6 +249,38 @@ export class NotificationService {
     } catch (error) {
       console.error('Error checking notification permissions:', error);
       return { display: 'denied' };
+    }
+  }
+
+  async testNotificationSystem(): Promise<void> {
+    try {
+      console.log('🧪 Testing notification system...');
+      
+      // Test immediate notification
+      console.log('1. Testing immediate notification...');
+      await this.sendImmediateNotification({
+        title: 'Test Immediate',
+        body: 'This is a test immediate notification'
+      });
+
+      // Test scheduled notification (5 seconds)
+      console.log('2. Testing scheduled notification (5 seconds)...');
+      const testTime = new Date();
+      testTime.setSeconds(testTime.getSeconds() + 5);
+      
+      await this.scheduleNotification({
+        title: 'Test Scheduled',
+        body: 'This is a test scheduled notification',
+        schedule: {
+          at: testTime,
+          repeats: false
+        }
+      });
+
+      console.log('✅ Notification system test completed');
+    } catch (error) {
+      console.error('❌ Notification system test failed:', error);
+      throw error;
     }
   }
 }
