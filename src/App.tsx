@@ -1,30 +1,11 @@
-import React, { useLayoutEffect, useRef, useEffect, useState } from 'react';
-import './App.css';
+import React, { useLayoutEffect, useRef } from 'react';
 import './index.css';
 import { gsap } from 'gsap';
-import { useNotificationStore } from './stores/notificationStore';
-import { NotificationDebugger } from './components/NotificationDebugger';
-import { WebNotificationTester } from './components/WebNotificationTester';
+import { AlarmComponent } from './components/AlarmComponent';
 
 function App() {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [scheduledTime, setScheduledTime] = useState<Date | null>(null);
-  const {
-    isInitialized,
-    hasPermission,
-    pendingNotifications,
-    error,
-    initializeNotifications,
-    requestPermissions,
-    sendImmediateNotification,
-    scheduleTimelyReminder,
-    scheduleAlarmReminder,
-    cancelAllNotifications,
-    refreshPendingNotifications,
-    clearError
-  } = useNotificationStore();
 
   useLayoutEffect(() => {
     if (titleRef.current) {
@@ -43,218 +24,103 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    initializeNotifications();
-  }, [initializeNotifications]);
-
-  // Countdown timer effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (countdown !== null && countdown > 0) {
-      interval = setInterval(() => {
-        setCountdown(prev => {
-          if (prev === null || prev <= 1) {
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [countdown]);
-
-  const handleImmediateNotification = async () => {
-    await sendImmediateNotification(
-      'Test Notification',
-      'This is an immediate notification test!'
-    );
+  // Example alarm configurations
+  const wakeUpAlarm = {
+    id: 'wake-up-1',
+    title: '🌅 Wake Up!',
+    body: 'Time to start your day! This alarm will keep beeping until you dismiss it.',
+    scheduledTime: new Date(Date.now() + 30 * 1000), // 30 seconds from now
+    color: 'red',
+    sound: 'alarm_sound',
+    vibration: [0, 1000, 1000, 1000, 1000, 1000],
+    actions: {
+      snooze: { title: 'Snooze 5min', minutes: 5 },
+      dismiss: { title: 'Stop Alarm' }
+    },
+    openPage: '/home',
+    repeatDaily: false
   };
 
-  const handleTimelyReminder = async () => {
-    const delaySeconds = 10; // 10 seconds for testing
-    const delayMinutes = delaySeconds / 60;
-    
-    // Set up countdown timer
-    setCountdown(delaySeconds);
-    setScheduledTime(new Date(Date.now() + delaySeconds * 1000));
-    
-    await scheduleTimelyReminder(
-      'Timely Reminder',
-      `This is a reminder scheduled for ${delaySeconds} seconds from now!`,
-      delayMinutes
-    );
+  const workoutAlarm = {
+    id: 'workout-1',
+    title: '💪 Workout Time!',
+    body: 'Time for your daily workout. Get moving!',
+    scheduledTime: new Date(Date.now() + 60 * 1000), // 1 minute from now
+    color: 'blue',
+    sound: 'alarm_sound',
+    vibration: [0, 500, 500, 500],
+    actions: {
+      snooze: { title: 'Snooze 10min', minutes: 10 },
+      dismiss: { title: 'Skip Workout' }
+    },
+    openPage: '/workout',
+    repeatDaily: true
   };
 
-  const handleAlarmReminder = async () => {
-    const delaySeconds = 30; // 30 seconds for testing
-    const alarmTime = new Date();
-    alarmTime.setSeconds(alarmTime.getSeconds() + delaySeconds);
-    
-    // Set up countdown timer
-    setCountdown(delaySeconds);
-    setScheduledTime(alarmTime);
-    
-    await scheduleAlarmReminder(
-      'Alarm Reminder',
-      `This is an alarm-type reminder that will work even when app is closed! (${delaySeconds}s)`,
-      alarmTime,
-      false
-    );
-  };
-
-  const handleRequestPermissions = async () => {
-    await requestPermissions();
-    await refreshPendingNotifications();
-  };
-
-  const handleTestNotifications = async () => {
-    try {
-      const { notificationService } = await import('./services/notificationService');
-      await notificationService.testNotificationSystem();
-      alert('Test notifications sent! Check console for details.');
-    } catch (error) {
-      console.error('Test failed:', error);
-      alert('Test failed. Check console for details.');
-    }
+  const meetingAlarm = {
+    id: 'meeting-1',
+    title: '📅 Meeting Reminder',
+    body: 'You have a meeting in 5 minutes. Join now!',
+    scheduledTime: new Date(Date.now() + 45 * 1000), // 45 seconds from now
+    color: 'green',
+    sound: 'alarm_sound',
+    vibration: [0, 200, 200, 200, 200, 200],
+    actions: {
+      snooze: { title: 'Remind in 2min', minutes: 2 },
+      dismiss: { title: 'Mark as Done' }
+    },
+    openPage: '/meeting',
+    repeatDaily: false
   };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-xl mx-auto p-6">
-        <h1 ref={titleRef} className="text-3xl font-bold tracking-tight">
-          PlanMe
+      <div className="max-w-2xl mx-auto p-6">
+        <h1 ref={titleRef} className="text-3xl font-bold tracking-tight text-center">
+          PlanMe Alarms
         </h1>
-        <p className="mt-2 text-gray-600">Personal planner with reliable, native notifications.</p>
+        <p className="mt-2 text-gray-600 text-center">
+          Smart alarms that keep beeping until you dismiss them!
+        </p>
 
-        {/* Permission Status */}
-        <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-          <h3 className="text-lg font-semibold">Notification Status</h3>
-          <div className="mt-2 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Initialized:</span>
-              <span className={`text-sm font-medium ${isInitialized ? 'text-green-600' : 'text-red-600'}`}>
-                {isInitialized ? 'Yes' : 'No'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Permission:</span>
-              <span className={`text-sm font-medium ${hasPermission ? 'text-green-600' : 'text-red-600'}`}>
-                {hasPermission ? 'Granted' : 'Denied'}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Pending:</span>
-              <span className="text-sm font-medium text-blue-600">
-                {pendingNotifications.length}
-              </span>
-            </div>
-          </div>
-          
-          {!hasPermission && (
-            <button
-              onClick={handleRequestPermissions}
-              className="mt-3 w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-            >
-              Request Notification Permission
-            </button>
-          )}
+        <div ref={cardRef} className="mt-8 space-y-6">
+          {/* Wake Up Alarm */}
+          <AlarmComponent
+            alarmConfig={wakeUpAlarm}
+            onAlarmTriggered={(alarmId) => console.log('Alarm triggered:', alarmId)}
+            onAlarmSnoozed={(alarmId, minutes) => console.log('Alarm snoozed:', alarmId, minutes)}
+            onAlarmDismissed={(alarmId) => console.log('Alarm dismissed:', alarmId)}
+          />
+
+          {/* Workout Alarm */}
+          <AlarmComponent
+            alarmConfig={workoutAlarm}
+            onAlarmTriggered={(alarmId) => console.log('Workout alarm triggered:', alarmId)}
+            onAlarmSnoozed={(alarmId, minutes) => console.log('Workout alarm snoozed:', alarmId, minutes)}
+            onAlarmDismissed={(alarmId) => console.log('Workout alarm dismissed:', alarmId)}
+          />
+
+          {/* Meeting Alarm */}
+          <AlarmComponent
+            alarmConfig={meetingAlarm}
+            onAlarmTriggered={(alarmId) => console.log('Meeting alarm triggered:', alarmId)}
+            onAlarmSnoozed={(alarmId, minutes) => console.log('Meeting alarm snoozed:', alarmId, minutes)}
+            onAlarmDismissed={(alarmId) => console.log('Meeting alarm dismissed:', alarmId)}
+          />
         </div>
 
-        {/* Timer Display */}
-        {countdown !== null && countdown > 0 && (
-          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-            <h3 className="text-lg font-semibold text-blue-800">⏰ Notification Timer</h3>
-            <div className="mt-2 text-center">
-              <div className="text-3xl font-bold text-blue-600">
-                {countdown} seconds
-              </div>
-              {scheduledTime && (
-                <div className="text-sm text-blue-600 mt-1">
-                  Scheduled for: {scheduledTime.toLocaleTimeString()}
-                </div>
-              )}
-            </div>
-            <div className="mt-2 text-xs text-blue-500">
-              Close the app to test background notifications!
-            </div>
-          </div>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-sm text-red-600">{error}</p>
-            <button
-              onClick={clearError}
-              className="mt-2 text-sm text-red-500 underline"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* Notification Tests */}
-        <div ref={cardRef} className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold">Notification Tests</h2>
-          <p className="mt-1 text-gray-600">Test different types of notifications:</p>
-
-          <div className="mt-4 space-y-3">
-            <button
-              onClick={handleImmediateNotification}
-              disabled={!hasPermission}
-              className="w-full rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:bg-gray-400"
-            >
-              1. Immediate Notification
-            </button>
-
-            <button
-              onClick={handleTimelyReminder}
-              disabled={!hasPermission || countdown !== null}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:bg-gray-400"
-            >
-              2. Timely Reminder (10s delay)
-            </button>
-
-            <button
-              onClick={handleAlarmReminder}
-              disabled={!hasPermission || countdown !== null}
-              className="w-full rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:bg-gray-400"
-            >
-              3. Alarm Reminder (30s, works when closed)
-            </button>
-
-            <button
-              onClick={handleTestNotifications}
-              disabled={!hasPermission}
-              className="w-full rounded-lg bg-purple-600 px-4 py-2 text-white hover:bg-purple-700 disabled:bg-gray-400"
-            >
-              🧪 Test Notification System
-            </button>
-
-            <button
-              onClick={cancelAllNotifications}
-              className="w-full rounded-lg bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
-            >
-              Cancel All Notifications
-            </button>
-          </div>
-
-          <div className="mt-4 text-xs text-gray-500">
-            <p>• Test on mobile device for full functionality</p>
-            <p>• Close app after scheduling to test background notifications</p>
-            <p>• Check notification panel for scheduled notifications</p>
-          </div>
+        {/* Instructions */}
+        <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <h3 className="font-semibold text-yellow-800 mb-2">📱 How to Test:</h3>
+          <ul className="text-sm text-yellow-700 space-y-1">
+            <li>• <strong>Android APK:</strong> Alarms work when app is closed</li>
+            <li>• <strong>Web:</strong> Only works when tab is open (browser limitation)</li>
+            <li>• <strong>Real Alarms:</strong> Keep beeping until you dismiss them!</li>
+            <li>• <strong>Actions:</strong> Snooze or Dismiss buttons on each alarm</li>
+            <li>• <strong>Colors:</strong> Each alarm has its own color theme</li>
+            <li>• <strong>Open Pages:</strong> Alarms can open specific pages when triggered</li>
+          </ul>
         </div>
-
-        {/* Web Notification Tester */}
-        <WebNotificationTester />
-
-        {/* Notification Debugger */}
-        <NotificationDebugger />
       </div>
     </div>
   );
