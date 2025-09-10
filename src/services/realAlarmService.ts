@@ -51,7 +51,12 @@ export class RealAlarmService {
       if (!available) {
         console.error('❌ RealAlarm plugin is NOT available on native side. Ensure it is registered in MainActivity and app rebuilt.');
       } else {
-        console.log('✅ RealAlarm plugin detected on native side.');
+        try {
+          const ping = await (RealAlarmPlugin as any).ping?.();
+          console.log('✅ RealAlarm plugin detected on native side. Ping:', ping);
+        } catch (e) {
+          console.warn('RealAlarm plugin ping failed (may still be registered):', e);
+        }
       }
     } catch (e) {
       console.warn('Could not verify native plugin availability:', e);

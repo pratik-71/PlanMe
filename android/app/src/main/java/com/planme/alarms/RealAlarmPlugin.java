@@ -182,4 +182,13 @@ public class RealAlarmPlugin extends Plugin {
             call.reject("Error cancelling all alarms: " + e.getMessage());
         }
     }
+
+    @PluginMethod
+    public void ping(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("plugin", TAG);
+        result.put("androidApi", Build.VERSION.SDK_INT);
+        result.put("ok", true);
+        call.resolve(result);
+    }
 }
