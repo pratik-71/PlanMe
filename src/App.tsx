@@ -7,6 +7,11 @@ function App() {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  
+  // Version and build info
+  const version = "1.0.0";
+  const buildTime = new Date().toLocaleString();
+  const buildId = Math.random().toString(36).substr(2, 9);
 
   useLayoutEffect(() => {
     if (titleRef.current) {
@@ -31,7 +36,9 @@ function App() {
   };
 
   useEffect(() => {
-    addDebugInfo('App initialized');
+    addDebugInfo(`App initialized - v${version}`);
+    addDebugInfo(`Build ID: ${buildId}`);
+    addDebugInfo(`Build time: ${buildTime}`);
     addDebugInfo('Alarm service ready');
   }, []);
 
@@ -69,9 +76,15 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-2xl mx-auto p-6">
-        <h1 ref={titleRef} className="text-3xl font-bold tracking-tight text-center">
-          PlanMe Alarm
-        </h1>
+        <div className="text-center">
+          <h1 ref={titleRef} className="text-3xl font-bold tracking-tight">
+            PlanMe Alarm
+          </h1>
+          <div className="mt-2 text-sm text-gray-600 space-y-1">
+            <div className="font-mono">v{version} | Build: {buildId}</div>
+            <div className="text-xs text-gray-500">{buildTime}</div>
+          </div>
+        </div>
 
         <div ref={cardRef} className="mt-8">
           <RealAlarmComponent

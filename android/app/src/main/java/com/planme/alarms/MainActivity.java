@@ -5,7 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.getcapacitor.BridgeActivity;
-import com.planme.alarms.RealAlarmPlugin;
+import com.getcapacitor.plugin.RealAlarmPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -14,8 +14,12 @@ public class MainActivity extends BridgeActivity {
         
         // Register the RealAlarmPlugin
         Log.d("MainActivity", "Registering RealAlarmPlugin...");
-        registerPlugin(RealAlarmPlugin.class);
-        Log.d("MainActivity", "RealAlarmPlugin registered successfully");
+        try {
+            registerPlugin(RealAlarmPlugin.class);
+            Log.d("MainActivity", "RealAlarmPlugin registered successfully");
+        } catch (Exception e) {
+            Log.e("MainActivity", "Failed to register RealAlarmPlugin", e);
+        }
     }
     
     @Override
