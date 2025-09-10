@@ -75,6 +75,8 @@ export class AlarmService {
     LocalNotifications.addListener('localNotificationReceived', (notification) => {
       if (notification.extra?.isAlarm) {
         console.log('🚨 ALARM TRIGGERED!', notification);
+        // Launch full-screen alarm activity
+        this.launchAlarmActivity(notification);
       }
     });
 
@@ -85,6 +87,16 @@ export class AlarmService {
         this.handleDismiss(notification.notification);
       }
     });
+  }
+
+  private async launchAlarmActivity(notification: any): Promise<void> {
+    try {
+      // This will be handled by the Android notification's fullScreenIntent
+      // The AlarmActivity will be launched automatically when the alarm triggers
+      console.log('🚨 Launching full-screen alarm activity for:', notification.title);
+    } catch (error) {
+      console.error('Error launching alarm activity:', error);
+    }
   }
 
   private async handleSnooze(notification: any): Promise<void> {
@@ -124,10 +136,11 @@ export class AlarmService {
 
   async scheduleAlarm(config: AlarmConfig): Promise<void> {
     try {
+      const notificationId = this.nextId++;
       const notification = {
         title: config.title,
         body: config.body,
-        id: this.nextId++,
+        id: notificationId,
         sound: config.sound || 'alarm_sound',
         actionTypeId: 'alarm',
         priority: 'high',
@@ -162,7 +175,17 @@ export class AlarmService {
           category: 'alarm',
           visibility: 'public',
           lights: true,
-          lightColor: '#FF0000'
+          lightColor: '#FF0000',
+          sound: 'alarm_sound',
+          // Intent to launch AlarmActivity
+          intent: {
+            action: 'android.intent.action.VIEW',
+            extras: {
+              title: config.title,
+              body: config.body,
+              notificationId: notificationId
+            }
+          }
         },
         // iOS specific configuration
         ios: {

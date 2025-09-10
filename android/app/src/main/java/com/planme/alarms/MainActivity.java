@@ -1,9 +1,10 @@
 package com.planme.alarms;
 
-import android.os.Bundle;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 
 import com.getcapacitor.BridgeActivity;
 
@@ -14,6 +15,24 @@ public class MainActivity extends BridgeActivity {
         
         // Create notification channel for alarms
         createNotificationChannel();
+    }
+    
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        
+        // Handle alarm intent
+        if (intent != null && intent.getAction() != null) {
+            if (intent.getAction().equals("android.intent.action.VIEW")) {
+                // Launch alarm activity
+                Intent alarmIntent = new Intent(this, AlarmActivity.class);
+                alarmIntent.putExtra("title", intent.getStringExtra("title"));
+                alarmIntent.putExtra("body", intent.getStringExtra("body"));
+                alarmIntent.putExtra("notificationId", intent.getIntExtra("notificationId", -1));
+                alarmIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(alarmIntent);
+            }
+        }
     }
     
     private void createNotificationChannel() {
@@ -31,6 +50,8 @@ public class MainActivity extends BridgeActivity {
             alarmChannel.setVibrationPattern(new long[]{0, 1000, 1000, 1000, 1000, 1000});
             alarmChannel.setShowBadge(true);
             alarmChannel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            alarmChannel.setBypassDnd(true); // Bypass Do Not Disturb
+            alarmChannel.setSound(android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM), null);
             
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             if (notificationManager != null) {
