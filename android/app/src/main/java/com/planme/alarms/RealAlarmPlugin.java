@@ -32,7 +32,7 @@ public class RealAlarmPlugin extends Plugin {
             int alarmId = call.getInt("alarmId", 0);
             String title = call.getString("title", "Alarm");
             String body = call.getString("body", "Time to wake up!");
-            long scheduledTime = call.getLong("scheduledTime", 0);
+            long scheduledTime = call.getLong("scheduledTime", 0L);
             String color = call.getString("color", "red");
             String sound = call.getString("sound", "alarm_sound");
             int snoozeMinutes = call.getInt("snoozeMinutes", 5);
