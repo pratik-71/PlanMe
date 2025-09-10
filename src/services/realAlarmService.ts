@@ -1,4 +1,13 @@
 import { Capacitor } from '@capacitor/core';
+import { registerPlugin } from '@capacitor/core';
+
+interface RealAlarmPluginInterface {
+  scheduleRealAlarm(options: any): Promise<any>;
+  cancelRealAlarm(options: any): Promise<any>;
+  cancelAllRealAlarms(options: any): Promise<any>;
+}
+
+const RealAlarmPlugin = registerPlugin<RealAlarmPluginInterface>('RealAlarm');
 
 export interface RealAlarmConfig {
   id: string;
@@ -42,12 +51,22 @@ export class RealAlarmService {
       }
 
       const alarmId = this.nextId++;
-      const alarmTime = config.scheduledTime.getTime();
       const now = Date.now();
 
-      if (alarmTime <= now) {
-        throw new Error('Alarm time must be in the future');
+      // Normalize scheduled time: if it's in the past, roll it forward
+      // - For repeating alarms, move to the next day at the same time
+      // - For one-off alarms, schedule 60 seconds from now
+      let scheduledDate = new Date(config.scheduledTime);
+      if (scheduledDate.getTime() <= now) {
+        if (config.repeatDaily) {
+          const nextDay = new Date(scheduledDate);
+          nextDay.setDate(nextDay.getDate() + 1);
+          scheduledDate = nextDay;
+        } else {
+          scheduledDate = new Date(now + 60_000);
+        }
       }
+      const alarmTime = scheduledDate.getTime();
 
       // Use Capacitor's native bridge to call Android AlarmManager
       const result = await this.callNativeMethod('scheduleRealAlarm', {
@@ -66,7 +85,7 @@ export class RealAlarmService {
         id: config.id,
         alarmId: alarmId,
         title: config.title,
-        scheduledFor: config.scheduledTime.toISOString(),
+        scheduledFor: scheduledDate.toISOString(),
         result: result
       });
 
@@ -107,22 +126,22 @@ export class RealAlarmService {
   private async callNativeMethod(methodName: string, data: any): Promise<any> {
     try {
       if (Capacitor.isNativePlatform()) {
-        // For now, we'll simulate the native call since the plugin needs to be properly registered
-        // In a real implementation, this would call the native plugin
-        console.log(`🚨 Native alarm method: ${methodName}`, data);
+        console.log(`🚨 Calling native alarm method: ${methodName}`, data);
         
-        // Simulate successful alarm scheduling
-        if (methodName === 'scheduleRealAlarm') {
-          // In a real app, this would call the native plugin
-          // For testing, we'll just log and return success
-          console.log('✅ Alarm would be scheduled natively:', data);
-          return { success: true, alarmId: data.alarmId };
+        // Call the actual native plugin
+        switch (methodName) {
+          case 'scheduleRealAlarm':
+            return await RealAlarmPlugin.scheduleRealAlarm(data);
+          case 'cancelRealAlarm':
+            return await RealAlarmPlugin.cancelRealAlarm(data);
+          case 'cancelAllRealAlarms':
+            return await RealAlarmPlugin.cancelAllRealAlarms(data);
+          default:
+            throw new Error(`Unknown method: ${methodName}`);
         }
-        
-        return { success: true };
       } else {
         // Web fallback - just log for testing
-        console.log(`Native method call: ${methodName}`, data);
+        console.log(`Web fallback for method: ${methodName}`, data);
         return { success: true };
       }
     } catch (error) {
