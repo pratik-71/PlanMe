@@ -4,8 +4,11 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
+import android.os.PowerManager;
 import android.util.Log;
+import android.provider.Settings;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -29,6 +32,7 @@ public class RealAlarmPlugin extends Plugin {
     @PluginMethod
     public void scheduleRealAlarm(PluginCall call) {
         try {
+            Log.d(TAG, "scheduleRealAlarm called with: " + call.getData().toString());
             int alarmId = call.getInt("alarmId", 0);
             String title = call.getString("title", "Alarm");
             String body = call.getString("body", "Time to wake up!");
@@ -85,6 +89,53 @@ public class RealAlarmPlugin extends Plugin {
         }
     }
     
+    @PluginMethod
+    public void checkAndRequestExactAlarm(PluginCall call) {
+        try {
+            boolean allowed = true;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                allowed = alarmManager.canScheduleExactAlarms();
+                Log.d(TAG, "canScheduleExactAlarms = " + allowed);
+                if (!allowed) {
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                    intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getContext().startActivity(intent);
+                }
+            }
+            JSObject result = new JSObject();
+            result.put("allowed", allowed);
+            call.resolve(result);
+        } catch (Exception e) {
+            Log.e(TAG, "Error requesting exact alarm permission", e);
+            call.reject("Error requesting exact alarm permission: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void checkAndRequestIgnoreBatteryOptimizations(PluginCall call) {
+        try {
+            PowerManager pm = (PowerManager) getContext().getSystemService(Context.POWER_SERVICE);
+            boolean ignoring = false;
+            if (pm != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                ignoring = pm.isIgnoringBatteryOptimizations(getContext().getPackageName());
+                Log.d(TAG, "isIgnoringBatteryOptimizations = " + ignoring);
+                if (!ignoring) {
+                    Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                    intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    getContext().startActivity(intent);
+                }
+            }
+            JSObject result = new JSObject();
+            result.put("ignoring", ignoring);
+            call.resolve(result);
+        } catch (Exception e) {
+            Log.e(TAG, "Error requesting ignore battery optimizations", e);
+            call.reject("Error requesting battery optimization exemption: " + e.getMessage());
+        }
+    }
+
     @PluginMethod
     public void cancelRealAlarm(PluginCall call) {
         try {

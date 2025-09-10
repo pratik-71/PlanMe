@@ -42,6 +42,20 @@ export class RealAlarmService {
       return;
     }
     console.log('🚨 Real alarm service initialized');
+    try {
+      // Check exact alarm permission (Android 12+)
+      const exact = await this.callNativeMethod('checkAndRequestExactAlarm', {});
+      console.log('Exact alarm permission status:', exact);
+    } catch (e) {
+      console.warn('Exact alarm permission check failed:', e);
+    }
+    try {
+      // Ask to ignore battery optimizations so alarms are reliable
+      const battery = await this.callNativeMethod('checkAndRequestIgnoreBatteryOptimizations', {});
+      console.log('Battery optimization status:', battery);
+    } catch (e) {
+      console.warn('Battery optimization request failed:', e);
+    }
   }
 
   async scheduleAlarm(config: RealAlarmConfig): Promise<void> {
@@ -67,6 +81,11 @@ export class RealAlarmService {
         }
       }
       const alarmTime = scheduledDate.getTime();
+      console.log('Scheduling REAL alarm with normalized time:', {
+        requested: config.scheduledTime.toISOString(),
+        normalized: scheduledDate.toISOString(),
+        repeatDaily: !!config.repeatDaily
+      });
 
       // Use Capacitor's native bridge to call Android AlarmManager
       const result = await this.callNativeMethod('scheduleRealAlarm', {
