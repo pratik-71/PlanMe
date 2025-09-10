@@ -43,6 +43,20 @@ export class RealAlarmService {
     }
     console.log('🚨 Real alarm service initialized');
     try {
+      // Verify native plugin availability
+      // Capacitor will return false if the Android side has not registered the plugin
+      const available = (Capacitor as any).isPluginAvailable
+        ? (Capacitor as any).isPluginAvailable('RealAlarm')
+        : true; // older Capacitor versions may not expose this, assume true
+      if (!available) {
+        console.error('❌ RealAlarm plugin is NOT available on native side. Ensure it is registered in MainActivity and app rebuilt.');
+      } else {
+        console.log('✅ RealAlarm plugin detected on native side.');
+      }
+    } catch (e) {
+      console.warn('Could not verify native plugin availability:', e);
+    }
+    try {
       // Check exact alarm permission (Android 12+)
       const exact = await this.callNativeMethod('checkAndRequestExactAlarm', {});
       console.log('Exact alarm permission status:', exact);
