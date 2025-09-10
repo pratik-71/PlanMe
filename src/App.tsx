@@ -40,7 +40,7 @@ function App() {
     addDebugInfo(`Build ID: ${buildId}`);
     addDebugInfo(`Build time: ${buildTime}`);
     addDebugInfo('Alarm service ready');
-  }, []);
+  }, [version, buildId, buildTime]);
 
   const now = new Date();
   const alarmTime = new Date(now.getTime() + 30 * 1000); // 30 seconds from now
