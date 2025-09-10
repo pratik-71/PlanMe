@@ -80,30 +80,16 @@ public class AlarmActivity extends Activity {
     }
     
     private void startAlarm() {
-        try {
-            // Play alarm sound
-            Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
-            if (alarmUri == null) {
-                alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            }
-            
-            mediaPlayer = MediaPlayer.create(this, alarmUri);
-            mediaPlayer.setLooping(true);
-            mediaPlayer.start();
-            
-            // Start vibration
-            vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-            if (vibrator != null && vibrator.hasVibrator()) {
-                long[] pattern = {0, 1000, 1000, 1000, 1000, 1000};
-                vibrator.vibrate(pattern, 0); // Repeat indefinitely
-            }
-            
-        } catch (Exception e) {
-            Toast.makeText(this, "Error starting alarm: " + e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+        // Alarm sound and vibration are already started by AlarmReceiver
+        // This method is kept for compatibility but the actual alarm is handled by AlarmReceiver
+        Toast.makeText(this, "🚨 ALARM TRIGGERED! 🚨", Toast.LENGTH_LONG).show();
     }
     
     private void stopAlarm() {
+        // Stop alarm using AlarmReceiver
+        AlarmReceiver.stopAlarm();
+        
+        // Also stop local media player if exists
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.release();

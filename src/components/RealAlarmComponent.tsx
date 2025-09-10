@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { alarmService, AlarmConfig } from '../services/alarmService';
+import { realAlarmService, RealAlarmConfig } from '../services/realAlarmService';
 
-interface AlarmComponentProps {
-  alarmConfig: AlarmConfig;
+interface RealAlarmComponentProps {
+  alarmConfig: RealAlarmConfig;
   onAlarmTriggered?: (alarmId: string) => void;
   onAlarmSnoozed?: (alarmId: string, snoozeMinutes: number) => void;
   onAlarmDismissed?: (alarmId: string) => void;
   className?: string;
 }
 
-export const AlarmComponent: React.FC<AlarmComponentProps> = ({
+export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
   alarmConfig,
   onAlarmTriggered,
   onAlarmSnoozed,
@@ -17,7 +17,6 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
   className = ''
 }) => {
   const [isInitialized, setIsInitialized] = useState(false);
-  const [hasPermission, setHasPermission] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const [timeUntilAlarm, setTimeUntilAlarm] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,49 +46,32 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
   const initializeAlarm = async () => {
     try {
       setError(null);
-      await alarmService.initialize();
-      const permissions = await alarmService.checkPermissions();
-      setHasPermission(permissions.display === 'granted');
+      await realAlarmService.initialize();
       setIsInitialized(true);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to initialize alarm');
+      setError(error instanceof Error ? error.message : 'Failed to initialize real alarm');
     }
   };
 
   const scheduleAlarm = async () => {
     try {
       setError(null);
-      await alarmService.scheduleAlarm(alarmConfig);
+      await realAlarmService.scheduleAlarm(alarmConfig);
       setIsScheduled(true);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to schedule alarm');
+      setError(error instanceof Error ? error.message : 'Failed to schedule real alarm');
     }
   };
 
   const cancelAlarm = async () => {
     try {
       setError(null);
-      // Find the notification ID for this alarm
-      const pending = await alarmService.getPendingAlarms();
-      const alarm = pending.find(a => a.extra?.originalId === alarmConfig.id);
-      
-      if (alarm) {
-        await alarmService.cancelAlarm(alarm.id);
-      }
+      // For now, we'll cancel all alarms since we don't have individual alarm tracking
+      await realAlarmService.cancelAllAlarms();
       setIsScheduled(false);
       setTimeUntilAlarm(null);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to cancel alarm');
-    }
-  };
-
-  const requestPermissions = async () => {
-    try {
-      setError(null);
-      const permission = await alarmService.requestPermissions();
-      setHasPermission(permission.display === 'granted');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to request permissions');
+      setError(error instanceof Error ? error.message : 'Failed to cancel real alarm');
     }
   };
 
@@ -116,7 +98,7 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
   if (!isInitialized) {
     return (
       <div className="p-4 bg-gray-100 rounded-lg">
-        <div className="animate-pulse">Initializing alarm service...</div>
+        <div className="animate-pulse">Initializing real alarm service...</div>
       </div>
     );
   }
@@ -141,10 +123,10 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
         <div className="mb-3 p-2 bg-white rounded border">
           <div className="text-center">
             <div className="text-2xl font-bold text-red-600">
-              {timeUntilAlarm > 0 ? formatTime(timeUntilAlarm) : 'ALARM TRIGGERED!'}
+              {timeUntilAlarm > 0 ? formatTime(timeUntilAlarm) : '🚨 ALARM TRIGGERED! 🚨'}
             </div>
             <div className="text-sm text-gray-500">
-              {timeUntilAlarm > 0 ? 'Time remaining' : 'Check your device for the alarm'}
+              {timeUntilAlarm > 0 ? 'Time remaining' : 'Check your device for the REAL ALARM!'}
             </div>
           </div>
         </div>
@@ -152,26 +134,19 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
 
       {/* Alarm Actions */}
       <div className="flex space-x-2">
-        {!hasPermission ? (
-          <button
-            onClick={requestPermissions}
-            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Grant Alarm Permission
-          </button>
-        ) : !isScheduled ? (
+        {!isScheduled ? (
           <button
             onClick={scheduleAlarm}
             className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-bold"
           >
-            Schedule Alarm
+            Schedule REAL ALARM
           </button>
         ) : (
           <button
             onClick={cancelAlarm}
             className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
-            Cancel Alarm
+            Cancel Real Alarm
           </button>
         )}
       </div>
@@ -185,6 +160,7 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
         {alarmConfig.actions?.snooze && (
           <div>Snooze: {alarmConfig.actions.snooze.title} ({alarmConfig.actions.snooze.minutes}min)</div>
         )}
+        <div className="font-bold text-red-600">⚠️ REAL ALARM - Will keep beeping until dismissed!</div>
       </div>
 
       {/* Error Display */}
@@ -196,4 +172,3 @@ export const AlarmComponent: React.FC<AlarmComponentProps> = ({
     </div>
   );
 };
-

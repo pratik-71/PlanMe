@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import './index.css';
 import { gsap } from 'gsap';
-import { AlarmComponent } from './components/AlarmComponent';
+import { RealAlarmComponent } from './components/RealAlarmComponent';
 
 function App() {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
@@ -85,7 +85,7 @@ function App() {
 
         <div ref={cardRef} className="mt-8 space-y-6">
           {/* Wake Up Alarm */}
-          <AlarmComponent
+          <RealAlarmComponent
             alarmConfig={wakeUpAlarm}
             onAlarmTriggered={(alarmId) => console.log('Alarm triggered:', alarmId)}
             onAlarmSnoozed={(alarmId, minutes) => console.log('Alarm snoozed:', alarmId, minutes)}
@@ -93,7 +93,7 @@ function App() {
           />
 
           {/* Workout Alarm */}
-          <AlarmComponent
+          <RealAlarmComponent
             alarmConfig={workoutAlarm}
             onAlarmTriggered={(alarmId) => console.log('Workout alarm triggered:', alarmId)}
             onAlarmSnoozed={(alarmId, minutes) => console.log('Workout alarm snoozed:', alarmId, minutes)}
@@ -101,7 +101,7 @@ function App() {
           />
 
           {/* Meeting Alarm */}
-          <AlarmComponent
+          <RealAlarmComponent
             alarmConfig={meetingAlarm}
             onAlarmTriggered={(alarmId) => console.log('Meeting alarm triggered:', alarmId)}
             onAlarmSnoozed={(alarmId, minutes) => console.log('Meeting alarm snoozed:', alarmId, minutes)}
