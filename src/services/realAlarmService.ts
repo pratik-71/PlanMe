@@ -40,98 +40,89 @@ export class RealAlarmService {
   }
 
   async initialize(): Promise<void> {
+    console.log('🚀 [INIT] Starting RealAlarmService initialization...');
+    
     if (!Capacitor.isNativePlatform()) {
-      console.log('Real alarm service only works on native platforms');
+      console.log('❌ [INIT] Real alarm service only works on native platforms');
       return;
     }
-    console.log('🚨 Real alarm service initialized');
+    
+    console.log('✅ [INIT] Running on native platform, proceeding...');
+    
     try {
-      // Verify native plugin availability
-      // Capacitor will return false if the Android side has not registered the plugin
-      const available = (Capacitor as any).isPluginAvailable
-        ? (Capacitor as any).isPluginAvailable('RealAlarm')
-        : true; // older Capacitor versions may not expose this, assume true
-      if (!available) {
-        console.error('❌ RealAlarm plugin is NOT available on native side. Ensure it is registered in MainActivity and app rebuilt.');
-      } else {
-        try {
-          const ping = await (RealAlarmPlugin as any).ping?.();
-          console.log('✅ RealAlarm plugin detected on native side. Ping:', ping);
-        } catch (e) {
-          console.warn('RealAlarm plugin ping failed (may still be registered):', e);
-        }
-      }
+      console.log('🔐 [INIT] Checking exact alarm permission...');
+      const exactResult = await this.callNativeMethod('checkAndRequestExactAlarm', {});
+      console.log('🔐 [INIT] Exact alarm permission result:', exactResult);
     } catch (e) {
-      console.warn('Could not verify native plugin availability:', e);
+      console.error('❌ [INIT] Exact alarm permission check failed:', e);
     }
+    
     try {
-      // Check exact alarm permission (Android 12+)
-      const exact = await this.callNativeMethod('checkAndRequestExactAlarm', {});
-      console.log('Exact alarm permission status:', exact);
+      console.log('🔋 [INIT] Checking battery optimization settings...');
+      const batteryResult = await this.callNativeMethod('checkAndRequestIgnoreBatteryOptimizations', {});
+      console.log('🔋 [INIT] Battery optimization result:', batteryResult);
     } catch (e) {
-      console.warn('Exact alarm permission check failed:', e);
+      console.error('❌ [INIT] Battery optimization request failed:', e);
     }
-    try {
-      // Ask to ignore battery optimizations so alarms are reliable
-      const battery = await this.callNativeMethod('checkAndRequestIgnoreBatteryOptimizations', {});
-      console.log('Battery optimization status:', battery);
-    } catch (e) {
-      console.warn('Battery optimization request failed:', e);
-    }
+    
+    console.log('✅ [INIT] RealAlarmService initialization completed');
   }
 
   async scheduleAlarm(config: RealAlarmConfig): Promise<void> {
+    console.log('🚨 [SCHEDULE] Starting alarm scheduling process...');
+    console.log('🚨 [SCHEDULE] Alarm config:', {
+      id: config.id,
+      title: config.title,
+      body: config.body,
+      scheduledTime: config.scheduledTime.toISOString(),
+      color: config.color,
+      sound: config.sound,
+      repeatDaily: config.repeatDaily
+    });
+    
     try {
       if (!Capacitor.isNativePlatform()) {
+        console.error('❌ [SCHEDULE] Not on native platform, cannot schedule real alarm');
         throw new Error('Real alarms only work on native platforms');
       }
 
       const alarmId = this.nextId++;
+      const scheduledTime = config.scheduledTime.getTime();
       const now = Date.now();
-
-      // Normalize scheduled time: if it's in the past, roll it forward
-      // - For repeating alarms, move to the next day at the same time
-      // - For one-off alarms, schedule 60 seconds from now
-      let scheduledDate = new Date(config.scheduledTime);
-      if (scheduledDate.getTime() <= now) {
-        if (config.repeatDaily) {
-          const nextDay = new Date(scheduledDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          scheduledDate = nextDay;
-        } else {
-          scheduledDate = new Date(now + 60_000);
-        }
-      }
-      const alarmTime = scheduledDate.getTime();
-      console.log('Scheduling REAL alarm with normalized time:', {
-        requested: config.scheduledTime.toISOString(),
-        normalized: scheduledDate.toISOString(),
-        repeatDaily: !!config.repeatDaily
+      const timeUntilAlarm = scheduledTime - now;
+      
+      console.log('🚨 [SCHEDULE] Alarm details:', {
+        alarmId: alarmId,
+        scheduledTime: scheduledTime,
+        scheduledTimeISO: new Date(scheduledTime).toISOString(),
+        currentTime: now,
+        currentTimeISO: new Date(now).toISOString(),
+        timeUntilAlarm: timeUntilAlarm,
+        timeUntilAlarmSeconds: Math.round(timeUntilAlarm / 1000)
       });
 
-      // Use Capacitor's native bridge to call Android AlarmManager
-      const result = await this.callNativeMethod('scheduleRealAlarm', {
+      const alarmData = {
         alarmId: alarmId,
         title: config.title,
         body: config.body,
-        scheduledTime: alarmTime,
+        scheduledTime: scheduledTime,
         color: config.color || 'red',
         sound: config.sound || 'alarm_sound',
         vibration: config.vibration || [0, 1000, 1000, 1000, 1000, 1000],
         snoozeMinutes: config.actions?.snooze?.minutes || 5,
         repeatDaily: config.repeatDaily || false
-      });
-
-      console.log('🚨 REAL ALARM scheduled:', {
-        id: config.id,
-        alarmId: alarmId,
-        title: config.title,
-        scheduledFor: scheduledDate.toISOString(),
-        result: result
-      });
+      };
+      
+      console.log('🚨 [SCHEDULE] Calling native method with data:', alarmData);
+      
+      // Use Capacitor's native bridge to call Android AlarmManager
+      const result = await this.callNativeMethod('scheduleRealAlarm', alarmData);
+      
+      console.log('✅ [SCHEDULE] Native method call completed:', result);
+      console.log('✅ [SCHEDULE] Alarm scheduled successfully!');
 
     } catch (error) {
-      console.error('Error scheduling real alarm:', error);
+      console.error('❌ [SCHEDULE] Error scheduling real alarm:', error);
       throw error;
     }
   }
@@ -165,41 +156,59 @@ export class RealAlarmService {
   }
 
   private async callNativeMethod(methodName: string, data: any): Promise<any> {
+    console.log(`🔌 [NATIVE] Calling native method: ${methodName}`);
+    console.log(`🔌 [NATIVE] Method data:`, data);
+    
     try {
       if (Capacitor.isNativePlatform()) {
-        console.log(`🚨 Calling native alarm method: ${methodName}`, data);
+        console.log('🔌 [NATIVE] Running on native platform, calling plugin...');
         
         // Try to call the plugin method directly
         try {
+          let result;
           switch (methodName) {
             case 'scheduleRealAlarm':
-              return await RealAlarmPlugin.scheduleRealAlarm(data);
+              console.log('🔌 [NATIVE] Calling RealAlarmPlugin.scheduleRealAlarm...');
+              result = await RealAlarmPlugin.scheduleRealAlarm(data);
+              break;
             case 'cancelRealAlarm':
-              return await RealAlarmPlugin.cancelRealAlarm(data);
+              console.log('🔌 [NATIVE] Calling RealAlarmPlugin.cancelRealAlarm...');
+              result = await RealAlarmPlugin.cancelRealAlarm(data);
+              break;
             case 'cancelAllRealAlarms':
-              return await RealAlarmPlugin.cancelAllRealAlarms(data);
+              console.log('🔌 [NATIVE] Calling RealAlarmPlugin.cancelAllRealAlarms...');
+              result = await RealAlarmPlugin.cancelAllRealAlarms(data);
+              break;
             case 'checkAndRequestExactAlarm':
-              return await RealAlarmPlugin.checkAndRequestExactAlarm(data);
+              console.log('🔌 [NATIVE] Calling RealAlarmPlugin.checkAndRequestExactAlarm...');
+              result = await RealAlarmPlugin.checkAndRequestExactAlarm(data);
+              break;
             case 'checkAndRequestIgnoreBatteryOptimizations':
-              return await RealAlarmPlugin.checkAndRequestIgnoreBatteryOptimizations(data);
+              console.log('🔌 [NATIVE] Calling RealAlarmPlugin.checkAndRequestIgnoreBatteryOptimizations...');
+              result = await RealAlarmPlugin.checkAndRequestIgnoreBatteryOptimizations(data);
+              break;
             case 'ping':
-              return await RealAlarmPlugin.ping(data);
+              console.log('🔌 [NATIVE] Calling RealAlarmPlugin.ping...');
+              result = await RealAlarmPlugin.ping(data);
+              break;
             default:
               throw new Error(`Unknown method: ${methodName}`);
           }
+          
+          console.log(`✅ [NATIVE] Plugin method ${methodName} succeeded:`, result);
+          return result;
+          
         } catch (pluginError) {
-          console.error(`Plugin method ${methodName} failed:`, pluginError);
-          // Fallback: simulate the call for testing
-          console.log(`⚠️ Plugin not available, simulating ${methodName}`);
+          console.error(`❌ [NATIVE] Plugin method ${methodName} failed:`, pluginError);
+          console.log(`⚠️ [NATIVE] Plugin not available, simulating ${methodName}`);
           return { success: true, simulated: true, method: methodName };
         }
       } else {
-        // Web fallback - just log for testing
-        console.log(`Web fallback for method: ${methodName}`, data);
+        console.log('🌐 [NATIVE] Running on web platform, returning mock result');
         return { success: true };
       }
     } catch (error) {
-      console.error('Error calling native method:', error);
+      console.error('❌ [NATIVE] Error calling native method:', error);
       throw error;
     }
   }

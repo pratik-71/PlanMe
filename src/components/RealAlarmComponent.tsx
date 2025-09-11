@@ -3,17 +3,11 @@ import { realAlarmService, RealAlarmConfig } from '../services/realAlarmService'
 
 interface RealAlarmComponentProps {
   alarmConfig: RealAlarmConfig;
-  onAlarmTriggered?: (alarmId: string) => void;
-  onAlarmSnoozed?: (alarmId: string, snoozeMinutes: number) => void;
-  onAlarmDismissed?: (alarmId: string) => void;
   className?: string;
 }
 
 export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
   alarmConfig,
-  onAlarmTriggered,
-  onAlarmSnoozed,
-  onAlarmDismissed,
   className = ''
 }) => {
   const [isInitialized, setIsInitialized] = useState(false);
@@ -45,35 +39,51 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
   }, [isScheduled, alarmTime]);
 
   const initializeAlarm = async () => {
+    console.log('🎯 [COMPONENT] Initializing alarm component...');
     try {
       setError(null);
+      console.log('🎯 [COMPONENT] Calling realAlarmService.initialize()...');
       await realAlarmService.initialize();
+      console.log('✅ [COMPONENT] Alarm service initialized successfully');
       setIsInitialized(true);
     } catch (error) {
+      console.error('❌ [COMPONENT] Failed to initialize alarm service:', error);
       setError(error instanceof Error ? error.message : 'Failed to initialize real alarm');
     }
   };
 
   const scheduleAlarm = async () => {
+    console.log('🎯 [COMPONENT] Schedule alarm button clicked');
+    console.log('🎯 [COMPONENT] Alarm config being scheduled:', alarmConfig);
+    
     try {
       setError(null);
+      console.log('🎯 [COMPONENT] Calling realAlarmService.scheduleAlarm()...');
       await realAlarmService.scheduleAlarm(alarmConfig);
+      console.log('✅ [COMPONENT] Alarm scheduled successfully, updating UI state...');
       setIsScheduled(true);
       setAlarmTime(new Date(alarmConfig.scheduledTime));
+      console.log('✅ [COMPONENT] UI state updated - alarm is now scheduled');
     } catch (error) {
+      console.error('❌ [COMPONENT] Failed to schedule alarm:', error);
       setError(error instanceof Error ? error.message : 'Failed to schedule real alarm');
     }
   };
 
   const cancelAlarm = async () => {
+    console.log('🎯 [COMPONENT] Cancel alarm button clicked');
     try {
       setError(null);
+      console.log('🎯 [COMPONENT] Calling realAlarmService.cancelAllAlarms()...');
       // For now, we'll cancel all alarms since we don't have individual alarm tracking
       await realAlarmService.cancelAllAlarms();
+      console.log('✅ [COMPONENT] Alarms cancelled successfully, updating UI state...');
       setIsScheduled(false);
       setTimeUntilAlarm(null);
       setAlarmTime(null);
+      console.log('✅ [COMPONENT] UI state updated - alarm is now cancelled');
     } catch (error) {
+      console.error('❌ [COMPONENT] Failed to cancel alarm:', error);
       setError(error instanceof Error ? error.message : 'Failed to cancel real alarm');
     }
   };

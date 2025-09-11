@@ -33,7 +33,7 @@ public class RealAlarmPlugin extends Plugin {
     @PluginMethod
     public void scheduleRealAlarm(PluginCall call) {
         try {
-            Log.d(TAG, "scheduleRealAlarm called with: " + call.getData().toString());
+            Log.d(TAG, "🚨 [ANDROID] scheduleRealAlarm called with: " + call.getData().toString());
             int alarmId = call.getInt("alarmId", 0);
             String title = call.getString("title", "Alarm");
             String body = call.getString("body", "Time to wake up!");
@@ -43,7 +43,19 @@ public class RealAlarmPlugin extends Plugin {
             int snoozeMinutes = call.getInt("snoozeMinutes", 5);
             boolean repeatDaily = call.getBoolean("repeatDaily", false);
             
+            Log.d(TAG, "🚨 [ANDROID] Parsed alarm data:");
+            Log.d(TAG, "🚨 [ANDROID] - alarmId: " + alarmId);
+            Log.d(TAG, "🚨 [ANDROID] - title: " + title);
+            Log.d(TAG, "🚨 [ANDROID] - body: " + body);
+            Log.d(TAG, "🚨 [ANDROID] - scheduledTime: " + scheduledTime);
+            Log.d(TAG, "🚨 [ANDROID] - scheduledTimeISO: " + new java.util.Date(scheduledTime).toString());
+            Log.d(TAG, "🚨 [ANDROID] - color: " + color);
+            Log.d(TAG, "🚨 [ANDROID] - sound: " + sound);
+            Log.d(TAG, "🚨 [ANDROID] - snoozeMinutes: " + snoozeMinutes);
+            Log.d(TAG, "🚨 [ANDROID] - repeatDaily: " + repeatDaily);
+            
             // Create intent for AlarmReceiver
+            Log.d(TAG, "🚨 [ANDROID] Creating AlarmReceiver intent...");
             Intent alarmIntent = new Intent(getContext(), AlarmReceiver.class);
             alarmIntent.setAction("com.planme.alarms.ALARM_TRIGGERED");
             alarmIntent.putExtra("title", title);
@@ -53,23 +65,34 @@ public class RealAlarmPlugin extends Plugin {
             alarmIntent.putExtra("sound", sound);
             alarmIntent.putExtra("snoozeMinutes", snoozeMinutes);
             alarmIntent.putExtra("repeatDaily", repeatDaily);
+            Log.d(TAG, "🚨 [ANDROID] AlarmReceiver intent created with extras");
             
             // Create PendingIntent
+            Log.d(TAG, "🚨 [ANDROID] Creating PendingIntent...");
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 getContext(),
                 alarmId,
                 alarmIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
+            Log.d(TAG, "🚨 [ANDROID] PendingIntent created successfully");
             
             // Schedule alarm using AlarmManager
+            Log.d(TAG, "🚨 [ANDROID] Scheduling alarm with AlarmManager...");
+            Log.d(TAG, "🚨 [ANDROID] Android version: " + Build.VERSION.SDK_INT);
+            Log.d(TAG, "🚨 [ANDROID] Scheduled time: " + scheduledTime);
+            Log.d(TAG, "🚨 [ANDROID] Current time: " + System.currentTimeMillis());
+            Log.d(TAG, "🚨 [ANDROID] Time until alarm: " + (scheduledTime - System.currentTimeMillis()) + "ms");
+            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                Log.d(TAG, "🚨 [ANDROID] Using setExactAndAllowWhileIdle (Android 6+)");
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
                     scheduledTime,
                     pendingIntent
                 );
             } else {
+                Log.d(TAG, "🚨 [ANDROID] Using setExact (Android <6)");
                 alarmManager.setExact(
                     AlarmManager.RTC_WAKEUP,
                     scheduledTime,
@@ -77,11 +100,13 @@ public class RealAlarmPlugin extends Plugin {
                 );
             }
             
-            Log.d(TAG, "Real alarm scheduled: " + alarmId + " for " + new java.util.Date(scheduledTime));
+            Log.d(TAG, "✅ [ANDROID] Real alarm scheduled successfully: " + alarmId + " for " + new java.util.Date(scheduledTime));
             
             JSObject result = new JSObject();
             result.put("success", true);
             result.put("alarmId", alarmId);
+            result.put("scheduledTime", scheduledTime);
+            result.put("androidVersion", Build.VERSION.SDK_INT);
             call.resolve(result);
             
         } catch (Exception e) {

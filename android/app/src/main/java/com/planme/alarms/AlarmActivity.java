@@ -27,17 +27,27 @@ public class AlarmActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] AlarmActivity onCreate called");
+        
         // Get alarm details from intent
         String title = getIntent().getStringExtra("title");
         String body = getIntent().getStringExtra("body");
         alarmId = getIntent().getIntExtra("alarmId", -1);
         
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Intent data:");
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] - title: " + title);
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] - body: " + body);
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] - alarmId: " + alarmId);
+        
         // Setup full screen alarm like Google Clock
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting up full screen alarm...");
         setupFullScreenAlarm();
         
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting content view...");
         setContentView(R.layout.activity_alarm);
         
         // Setup UI
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting up UI elements...");
         TextView titleView = findViewById(R.id.alarm_title);
         TextView bodyView = findViewById(R.id.alarm_body);
         TextView timeView = findViewById(R.id.current_time);
@@ -46,11 +56,14 @@ public class AlarmActivity extends Activity {
         
         titleView.setText(title != null ? title : "🚨 ALARM");
         bodyView.setText(body != null ? body : "Time to wake up!");
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] UI text set");
         
         // Update current time
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Updating current time...");
         updateCurrentTime(timeView);
         
         // Start alarm sound and vibration
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Starting alarm sound and vibration...");
         startAlarm();
         
         // Setup buttons

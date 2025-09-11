@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef, useState, useEffect } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import './index.css';
 import { gsap } from 'gsap';
 import { RealAlarmComponent } from './components/RealAlarmComponent';
@@ -6,12 +6,6 @@ import { RealAlarmComponent } from './components/RealAlarmComponent';
 function App() {
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const cardRef = useRef<HTMLDivElement | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
-  
-  // Version and build info
-  const version = "1.0.0";
-  const buildTime = new Date().toLocaleString();
-  const buildId = Math.random().toString(36).substr(2, 9);
 
   useLayoutEffect(() => {
     if (titleRef.current) {
@@ -29,18 +23,6 @@ function App() {
       );
     }
   }, []);
-
-  const addDebugInfo = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setDebugInfo(prev => [...prev, `[${timestamp}] ${message}`]);
-  };
-
-  useEffect(() => {
-    addDebugInfo(`App initialized - v${version}`);
-    addDebugInfo(`Build ID: ${buildId}`);
-    addDebugInfo(`Build time: ${buildTime}`);
-    addDebugInfo('Alarm service ready');
-  }, [version, buildId, buildTime]);
 
   const now = new Date();
   const alarmTime = new Date(now.getTime() + 30 * 1000); // 30 seconds from now
@@ -61,18 +43,6 @@ function App() {
     repeatDaily: false
   };
 
-  const handleAlarmTriggered = (alarmId: string) => {
-    addDebugInfo(`🚨 ALARM TRIGGERED: ${alarmId}`);
-  };
-
-  const handleAlarmSnoozed = (alarmId: string, minutes: number) => {
-    addDebugInfo(`⏰ ALARM SNOOZED: ${alarmId} for ${minutes} minutes`);
-  };
-
-  const handleAlarmDismissed = (alarmId: string) => {
-    addDebugInfo(`✅ ALARM DISMISSED: ${alarmId}`);
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-2xl mx-auto p-6">
@@ -80,34 +50,12 @@ function App() {
           <h1 ref={titleRef} className="text-3xl font-bold tracking-tight">
             PlanMe Alarm
           </h1>
-          <div className="mt-2 text-sm text-gray-600 space-y-1">
-            <div className="font-mono">v{version} | Build: {buildId}</div>
-            <div className="text-xs text-gray-500">{buildTime}</div>
-          </div>
         </div>
 
         <div ref={cardRef} className="mt-8">
           <RealAlarmComponent
             alarmConfig={testAlarm}
-            onAlarmTriggered={handleAlarmTriggered}
-            onAlarmSnoozed={handleAlarmSnoozed}
-            onAlarmDismissed={handleAlarmDismissed}
           />
-        </div>
-
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Debug Info:</h3>
-          <div className="text-sm text-gray-700 space-y-1 max-h-40 overflow-y-auto">
-            {debugInfo.length === 0 ? (
-              <p className="text-gray-500">No debug info yet...</p>
-            ) : (
-              debugInfo.map((info, index) => (
-                <div key={index} className="font-mono text-xs">
-                  {info}
-                </div>
-              ))
-            )}
-          </div>
         </div>
       </div>
     </div>
