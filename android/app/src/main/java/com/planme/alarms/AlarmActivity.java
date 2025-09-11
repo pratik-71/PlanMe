@@ -44,39 +44,136 @@ public class AlarmActivity extends Activity {
         setupFullScreenAlarm();
         
         android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting content view...");
-        setContentView(R.layout.activity_alarm);
-        
-        // Setup UI
-        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting up UI elements...");
-        TextView titleView = findViewById(R.id.alarm_title);
-        TextView bodyView = findViewById(R.id.alarm_body);
-        TextView timeView = findViewById(R.id.current_time);
-        Button snoozeButton = findViewById(R.id.snooze_button);
-        Button dismissButton = findViewById(R.id.dismiss_button);
-        
-        titleView.setText(title != null ? title : "🚨 ALARM");
-        bodyView.setText(body != null ? body : "Time to wake up!");
-        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] UI text set");
-        
-        // Update current time
-        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Updating current time...");
-        updateCurrentTime(timeView);
+        try {
+            setContentView(R.layout.activity_alarm);
+            android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] Layout loaded successfully");
+            
+            // Setup UI
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting up UI elements...");
+            TextView titleView = findViewById(R.id.alarm_title);
+            TextView bodyView = findViewById(R.id.alarm_body);
+            TextView timeView = findViewById(R.id.current_time);
+            Button snoozeButton = findViewById(R.id.snooze_button);
+            Button dismissButton = findViewById(R.id.dismiss_button);
+            
+            if (titleView != null) {
+                titleView.setText(title != null ? title : "🚨 ALARM");
+                android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Title set: " + title);
+            } else {
+                android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] titleView is null!");
+            }
+            
+            if (bodyView != null) {
+                bodyView.setText(body != null ? body : "Time to wake up!");
+                android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Body set: " + body);
+            } else {
+                android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] bodyView is null!");
+            }
+            
+            // Update current time
+            if (timeView != null) {
+                android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Updating current time...");
+                updateCurrentTime(timeView);
+            } else {
+                android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] timeView is null!");
+            }
+            
+            // Setup buttons
+            if (snoozeButton != null && dismissButton != null) {
+                android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting up buttons...");
+                snoozeButton.setOnClickListener(v -> {
+                    android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Snooze button clicked");
+                    snoozeAlarm();
+                });
+                
+                dismissButton.setOnClickListener(v -> {
+                    android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Dismiss button clicked");
+                    dismissAlarm();
+                });
+                android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] Buttons setup completed");
+            } else {
+                android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] Buttons are null!");
+            }
+            
+        } catch (Exception e) {
+            android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] Error setting up UI: " + e.getMessage(), e);
+            // Create a simple fallback UI
+            createFallbackUI(title, body);
+        }
         
         // Start alarm sound and vibration
         android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Starting alarm sound and vibration...");
         startAlarm();
-        
-        // Setup buttons
-        snoozeButton.setOnClickListener(v -> {
-            snoozeAlarm();
-        });
-        
-        dismissButton.setOnClickListener(v -> {
-            dismissAlarm();
-        });
+    }
+    
+    private void createFallbackUI(String title, String body) {
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Creating fallback UI...");
+        try {
+            // Create a simple programmatic UI
+            android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+            layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+            layout.setBackgroundColor(0xFFFF0000); // Red background
+            layout.setGravity(android.view.Gravity.CENTER);
+            layout.setPadding(50, 50, 50, 50);
+            
+            // Title
+            TextView titleView = new TextView(this);
+            titleView.setText(title != null ? title : "🚨 ALARM");
+            titleView.setTextSize(32);
+            titleView.setTextColor(0xFFFFFFFF);
+            titleView.setGravity(android.view.Gravity.CENTER);
+            layout.addView(titleView);
+            
+            // Body
+            TextView bodyView = new TextView(this);
+            bodyView.setText(body != null ? body : "Time to wake up!");
+            bodyView.setTextSize(18);
+            bodyView.setTextColor(0xFFFFFFFF);
+            bodyView.setGravity(android.view.Gravity.CENTER);
+            layout.addView(bodyView);
+            
+            // Time
+            TextView timeView = new TextView(this);
+            timeView.setText(new java.text.SimpleDateFormat("h:mm a", java.util.Locale.getDefault()).format(new java.util.Date()));
+            timeView.setTextSize(48);
+            timeView.setTextColor(0xFFFFFFFF);
+            timeView.setGravity(android.view.Gravity.CENTER);
+            layout.addView(timeView);
+            
+            // Buttons
+            android.widget.LinearLayout buttonLayout = new android.widget.LinearLayout(this);
+            buttonLayout.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            buttonLayout.setGravity(android.view.Gravity.CENTER);
+            
+            Button snoozeButton = new Button(this);
+            snoozeButton.setText("SNOOZE");
+            snoozeButton.setTextSize(16);
+            snoozeButton.setBackgroundColor(0xFFFFA500);
+            snoozeButton.setTextColor(0xFFFFFFFF);
+            snoozeButton.setOnClickListener(v -> snoozeAlarm());
+            
+            Button dismissButton = new Button(this);
+            dismissButton.setText("DISMISS");
+            dismissButton.setTextSize(16);
+            dismissButton.setBackgroundColor(0xFF00FF00);
+            dismissButton.setTextColor(0xFFFFFFFF);
+            dismissButton.setOnClickListener(v -> dismissAlarm());
+            
+            buttonLayout.addView(snoozeButton);
+            buttonLayout.addView(dismissButton);
+            layout.addView(buttonLayout);
+            
+            setContentView(layout);
+            android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] Fallback UI created successfully");
+            
+        } catch (Exception e) {
+            android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] Error creating fallback UI: " + e.getMessage(), e);
+        }
     }
     
     private void setupFullScreenAlarm() {
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting up full screen alarm...");
+        
         // Make it full screen and wake up the device like Google Clock
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         
@@ -90,6 +187,8 @@ public class AlarmActivity extends Activity {
             WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         );
         
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Window flags set");
+        
         // Acquire wake lock to keep screen on
         PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(
@@ -97,12 +196,18 @@ public class AlarmActivity extends Activity {
             "PlanMe:AlarmWakeLock"
         );
         wakeLock.acquire(10*60*1000L /*10 minutes*/);
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Wake lock acquired");
         
         // Dismiss keyguard if locked
         KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
         if (keyguardManager.isKeyguardLocked()) {
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Keyguard is locked, requesting dismiss");
             keyguardManager.requestDismissKeyguard(this, null);
+        } else {
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Keyguard is not locked");
         }
+        
+        android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] Full screen alarm setup completed");
     }
     
     private void updateCurrentTime(TextView timeView) {
@@ -112,33 +217,57 @@ public class AlarmActivity extends Activity {
     }
     
     private void startAlarm() {
+        android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Starting alarm sound and vibration...");
+        
         try {
             // Set volume to maximum like Google Clock
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Setting audio volume to maximum...");
             AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM), 0);
+            int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM);
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxVolume, 0);
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Volume set to: " + maxVolume);
             
             // Play alarm sound continuously
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Getting alarm sound URI...");
             Uri alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
             if (alarmUri == null) {
+                android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] No alarm sound, using ringtone...");
                 alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
             }
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Sound URI: " + alarmUri);
             
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Creating MediaPlayer...");
             mediaPlayer = MediaPlayer.create(this, alarmUri);
+            if (mediaPlayer == null) {
+                android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] MediaPlayer is null!");
+                Toast.makeText(this, "❌ Error: Cannot create MediaPlayer", Toast.LENGTH_LONG).show();
+                return;
+            }
+            
             mediaPlayer.setLooping(true);
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_ALARM);
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Starting MediaPlayer...");
             mediaPlayer.start();
+            android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] MediaPlayer started successfully");
             
             // Start vibration pattern like Google Clock
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Starting vibration...");
             vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
             if (vibrator != null && vibrator.hasVibrator()) {
                 long[] pattern = {0, 1000, 1000, 1000, 1000, 1000};
                 vibrator.vibrate(pattern, 0); // Repeat indefinitely
+                android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] Vibration started");
+            } else {
+                android.util.Log.w("AlarmActivity", "⚠️ [ACTIVITY] No vibrator available");
             }
             
+            android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Showing alarm toast...");
             Toast.makeText(this, "🚨 ALARM TRIGGERED! 🚨", Toast.LENGTH_LONG).show();
+            android.util.Log.d("AlarmActivity", "✅ [ACTIVITY] Alarm started successfully!");
             
         } catch (Exception e) {
-            Toast.makeText(this, "Error starting alarm: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            android.util.Log.e("AlarmActivity", "❌ [ACTIVITY] Error starting alarm: " + e.getMessage(), e);
+            Toast.makeText(this, "❌ Error starting alarm: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
     
