@@ -29,6 +29,12 @@ public class AlarmActivity extends Activity {
         
         android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] AlarmActivity onCreate called");
         
+        // Ensure this activity can be launched from background
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+        }
+        
         // Get alarm details from intent
         String title = getIntent().getStringExtra("title");
         String body = getIntent().getStringExtra("body");
@@ -184,7 +190,9 @@ public class AlarmActivity extends Activity {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
             WindowManager.LayoutParams.FLAG_FULLSCREEN |
-            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+            WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN |
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
         );
         
         android.util.Log.d("AlarmActivity", "🚨 [ACTIVITY] Window flags set");

@@ -44,7 +44,9 @@ public class AlarmReceiver extends BroadcastReceiver {
                 Intent.FLAG_ACTIVITY_NEW_TASK | 
                 Intent.FLAG_ACTIVITY_CLEAR_TOP |
                 Intent.FLAG_ACTIVITY_SINGLE_TOP |
-                Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT
+                Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT |
+                Intent.FLAG_ACTIVITY_NO_ANIMATION |
+                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             );
             Log.d(TAG, "🚨 [RECEIVER] AlarmActivity intent created with flags");
             
