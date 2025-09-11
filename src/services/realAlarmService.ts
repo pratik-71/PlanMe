@@ -155,6 +155,18 @@ export class RealAlarmService {
     }
   }
 
+  async ping(): Promise<any> {
+    try {
+      console.log('🏓 [PING] Testing native plugin connection...');
+      const result = await this.callNativeMethod('ping', {});
+      console.log('🏓 [PING] Plugin response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [PING] Plugin test failed:', error);
+      throw error;
+    }
+  }
+
   private async callNativeMethod(methodName: string, data: any): Promise<any> {
     console.log(`🔌 [NATIVE] Calling native method: ${methodName}`);
     console.log(`🔌 [NATIVE] Method data:`, data);

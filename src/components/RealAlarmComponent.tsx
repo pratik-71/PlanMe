@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { realAlarmService, RealAlarmConfig } from '../services/realAlarmService';
 
 interface RealAlarmComponentProps {
@@ -40,14 +41,30 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
 
   const initializeAlarm = async () => {
     console.log('🎯 [COMPONENT] Initializing alarm component...');
+    console.log('🎯 [COMPONENT] Platform check:', {
+      platform: Capacitor.getPlatform(),
+      isNative: Capacitor.isNativePlatform(),
+      userAgent: navigator.userAgent
+    });
+    
     try {
       setError(null);
       console.log('🎯 [COMPONENT] Calling realAlarmService.initialize()...');
+      
+      // Test if the service exists
+      console.log('🎯 [COMPONENT] RealAlarmService instance:', realAlarmService);
+      console.log('🎯 [COMPONENT] RealAlarmService methods:', Object.getOwnPropertyNames(realAlarmService));
+      
       await realAlarmService.initialize();
       console.log('✅ [COMPONENT] Alarm service initialized successfully');
       setIsInitialized(true);
     } catch (error) {
       console.error('❌ [COMPONENT] Failed to initialize alarm service:', error);
+      console.error('❌ [COMPONENT] Error details:', {
+        name: (error as any)?.name,
+        message: (error as any)?.message,
+        stack: (error as any)?.stack
+      });
       setError(error instanceof Error ? error.message : 'Failed to initialize real alarm');
     }
   };
