@@ -19,6 +19,7 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const [timeUntilAlarm, setTimeUntilAlarm] = useState<number | null>(null);
+  const [alarmTime, setAlarmTime] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,10 +27,10 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isScheduled && alarmConfig.scheduledTime) {
+    if (isScheduled && alarmTime) {
       const interval = setInterval(() => {
         const now = new Date();
-        const timeDiff = alarmConfig.scheduledTime.getTime() - now.getTime();
+        const timeDiff = alarmTime.getTime() - now.getTime();
         
         if (timeDiff <= 0) {
           setTimeUntilAlarm(0);
@@ -41,7 +42,7 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
 
       return () => clearInterval(interval);
     }
-  }, [isScheduled, alarmConfig.scheduledTime]);
+  }, [isScheduled, alarmTime]);
 
   const initializeAlarm = async () => {
     try {
@@ -58,6 +59,7 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
       setError(null);
       await realAlarmService.scheduleAlarm(alarmConfig);
       setIsScheduled(true);
+      setAlarmTime(new Date(alarmConfig.scheduledTime));
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to schedule real alarm');
     }
@@ -70,6 +72,7 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
       await realAlarmService.cancelAllAlarms();
       setIsScheduled(false);
       setTimeUntilAlarm(null);
+      setAlarmTime(null);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to cancel real alarm');
     }
@@ -118,16 +121,38 @@ export const RealAlarmComponent: React.FC<RealAlarmComponentProps> = ({
       {/* Alarm Body */}
       <p className="text-gray-700 mb-3">{alarmConfig.body}</p>
 
+      {/* Alarm Time Preview */}
+      {!isScheduled && (
+        <div className="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="text-center">
+            <div className="text-sm text-blue-800 font-semibold mb-1">
+              ⏰ Alarm will beep at:
+            </div>
+            <div className="text-lg font-mono text-blue-900">
+              {alarmConfig.scheduledTime.toLocaleString()}
+            </div>
+            <div className="text-xs text-blue-600 mt-1">
+              {Math.ceil((alarmConfig.scheduledTime.getTime() - new Date().getTime()) / 1000)} seconds from now
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Time Until Alarm */}
       {isScheduled && timeUntilAlarm !== null && (
-        <div className="mb-3 p-2 bg-white rounded border">
+        <div className="mb-3 p-4 bg-white rounded-lg border-2 border-red-200">
           <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-3xl font-bold text-red-600 mb-2">
               {timeUntilAlarm > 0 ? formatTime(timeUntilAlarm) : '🚨 ALARM TRIGGERED! 🚨'}
             </div>
-            <div className="text-sm text-gray-500">
-              {timeUntilAlarm > 0 ? 'Time remaining' : 'Check your device for the REAL ALARM!'}
+            <div className="text-sm text-gray-600 mb-1">
+              {timeUntilAlarm > 0 ? 'Time remaining until alarm beeps' : 'Check your device for the REAL ALARM!'}
             </div>
+            {alarmTime && (
+              <div className="text-xs text-gray-500 font-mono">
+                Alarm will beep at: {alarmTime.toLocaleString()}
+              </div>
+            )}
           </div>
         </div>
       )}
